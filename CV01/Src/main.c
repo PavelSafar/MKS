@@ -21,6 +21,7 @@
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
+uint32_t pole = 0b10101011101110111010101000000000;
 
 int main(void)
 {
@@ -29,7 +30,12 @@ int main(void)
 	GPIOA->MODER |= GPIO_MODER_MODER5_0; //PA5 output push-pull
 	while(1)
 	{
-		GPIOA->ODR ^= (1<<5); // toggle
+		for(uint8_t i = 0; i<32; i++)
+		{
+			if(pole&0x10000000) GPIOA->BSRR = (1<<5); // set
+			else GPIOA->BRR = (1<<5); // reset
+			pole = pole <<1;
+		}
 		for (volatile uint32_t i = 0; i < 100000; i++); //wait
 	}
 }
