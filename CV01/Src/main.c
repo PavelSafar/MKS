@@ -16,12 +16,20 @@
  *
  ******************************************************************************
  */
-
+#include "STM32F0xx.h"
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
+
 int main(void)
 {
-	for(;;);
+	// GPIO SETUP
+	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;	//enable clk
+	GPIOA->MODER |= GPIO_MODER_MODER5_0; //PA5 output push-pull
+	while(1)
+	{
+		GPIOA->ODR ^= (1<<5); // toggle
+		for (volatile uint32_t i = 0; i < 100000; i++); //wait
+	}
 }
