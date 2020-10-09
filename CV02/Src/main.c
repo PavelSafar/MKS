@@ -21,6 +21,15 @@
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
+static volatile uint32_t Tick = 0;
+#define LED_TIME_BLINK 300
+
+
+void SysTick_Handler(void)
+ {
+	Tick++;
+ }
+
 void EXTI0_1_IRQHandler(void)
 {
 	if (EXTI->PR & EXTI_PR_PR0)
@@ -29,6 +38,18 @@ void EXTI0_1_IRQHandler(void)
 			GPIOB->ODR ^= (1<<0); // toggle PB0
 	}
 }
+
+void blikac(void)
+ {
+	static uint32_t delay;
+
+	if (Tick > delay + LED_TIME_BLINK)
+	{
+		GPIOA->ODR ^= (1<<4); // toggle PA4
+		delay = Tick;
+	}
+ }
+
 
 int main(void)
 {
@@ -47,11 +68,13 @@ int main(void)
 	 EXTI->FTSR |= EXTI_FTSR_TR0; // trigger on falling edge
 	 NVIC_EnableIRQ(EXTI0_1_IRQn); // enable EXTI0_1
 
+	 //systick setup
+	 SysTick_Config(8000); // 1ms
 
 
 
 	while(1)
 	{
-
+		blikac();
 	}
 }
