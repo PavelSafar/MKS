@@ -26,6 +26,7 @@ static volatile uint32_t Tick = 0;
 #define LED_TIME_SHORT 100
 #define LED_TIME_LONG  1000
 #define BUTTON_DEBOUNCE 40
+#define BUTTON_DEBOUNCE_SHORT 5
 
 void SysTick_Handler(void)
  {
@@ -55,7 +56,9 @@ void blikac(void)
 void tlacitka(void)
 {
 	static uint32_t debounce1;
+	static uint32_t debounce2;
 	static uint32_t off_time;
+
 	if(Tick > debounce1 + BUTTON_DEBOUNCE)
 	 {
 		static uint32_t old_s2;
@@ -68,27 +71,23 @@ void tlacitka(void)
 		 debounce1 = Tick;
 	 }
 
-	if(Tick>off_time)
-	{
-		GPIOB->BRR = (1<<0);
-	}
 
-	static uint32_t debounce2;
-	static uint32_t off_time2;
+
+
 	//LED2
-	if(Tick > debounce2 + BUTTON_DEBOUNCE)
+	if(Tick > debounce2 + BUTTON_DEBOUNCE_SHORT)
 	 {
-		static uint32_t old_s1;
-		 uint32_t new_s1 = GPIOC->IDR & (1<<1);
-		 if (old_s1 && !new_s1) { // falling edge
-		 off_time2 = Tick + LED_TIME_LONG;
+		static uint16_t debounce = 0xFFFF;
+		 if( GPIOC->IDR & (1<<1)) debounce |=0x0001;
+		 if (debounce == 0x8000) { // falling edge
+		 off_time = Tick + LED_TIME_LONG;
 		 GPIOB->BSRR = (1<<0);
 		 }
-		 old_s1 = new_s1;
-		 debounce1 = Tick;
+
+		 debounce2 = Tick;
 	 }
 
-	if(Tick>off_time2)
+	if(Tick>off_time)
 	{
 		GPIOB->BRR = (1<<0);
 	}
@@ -121,5 +120,6 @@ int main(void)
 	while(1)
 	{
 		blikac();
+		tlacitka();
 	}
 }
