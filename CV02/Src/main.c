@@ -21,7 +21,14 @@
   #warning "FPU is not initialized, but the project is compiling for an FPU. Please initialize the FPU before use."
 #endif
 
-uint32_t pole = 0b10101011101110111010101000000000;
+void EXTI0_1_IRQHandler(void)
+{
+	if (EXTI->PR & EXTI_PR_PR0)
+	{ // check line 0 has triggered the IT
+			EXTI->PR |= EXTI_PR_PR0; // clear the pending bit
+			GPIOB->ODR ^= (1<<0); // toggle PB0
+	}
+}
 
 int main(void)
 {
@@ -33,15 +40,18 @@ int main(void)
 	 GPIOC->PUPDR |= GPIO_PUPDR_PUPDR0_0; // S2 = PC0, pullup
 	 GPIOC->PUPDR |= GPIO_PUPDR_PUPDR1_0; // S1 = PC1, pullup
 
+	 //interrupt setup
+	 RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+	 SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI0_PC; // select PC0 for EXTI0
+	 EXTI->IMR |= EXTI_IMR_MR0; // mask
+	 EXTI->FTSR |= EXTI_FTSR_TR0; // trigger on falling edge
+	 NVIC_EnableIRQ(EXTI0_1_IRQn); // enable EXTI0_1
+
+
+
 
 	while(1)
 	{
-		for(uint8_t i = 0; i<32; i++)
-		{
-			if(pole&0x10000000) GPIOA->BSRR = (1<<5); // set
-			else GPIOA->BRR = (1<<5); // reset
-			pole = pole <<1;
-		}
-		for (volatile uint32_t i = 0; i < 100000; i++); //wait
+
 	}
 }
