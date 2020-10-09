@@ -45,8 +45,8 @@ CV02.bin \
 all: CV02.elf secondary-outputs
 
 # Tool invocations
-CV02.elf: $(OBJS) $(USER_OBJS) X:\github\CV02\STM32F030R8TX_FLASH.ld
-	arm-none-eabi-gcc -o "CV02.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"X:\github\CV02\STM32F030R8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="CV02.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+CV02.elf: $(OBJS) $(USER_OBJS) X:\github\MKS\CV02\STM32F030R8TX_FLASH.ld
+	arm-none-eabi-gcc -o "CV02.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0 -T"X:\github\MKS\CV02\STM32F030R8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="CV02.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

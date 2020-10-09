@@ -26,8 +26,14 @@ uint32_t pole = 0b10101011101110111010101000000000;
 int main(void)
 {
 	// GPIO SETUP
-	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;	//enable clk
-	GPIOA->MODER |= GPIO_MODER_MODER5_0; //PA5 output push-pull
+
+	RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOCEN; // enable CLK
+	 GPIOA->MODER |= GPIO_MODER_MODER4_1; // LED1 = PA4, output
+	 GPIOB->MODER |= GPIO_MODER_MODER0_1; // LED2 = PB0, output
+	 GPIOC->PUPDR |= GPIO_PUPDR_PUPDR0_0; // S2 = PC0, pullup
+	 GPIOC->PUPDR |= GPIO_PUPDR_PUPDR1_0; // S1 = PC1, pullup
+
+
 	while(1)
 	{
 		for(uint8_t i = 0; i<32; i++)
