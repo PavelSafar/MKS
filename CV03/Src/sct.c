@@ -37,3 +37,20 @@ void sct_init(void)
 	sct_noe(0);
 	sct_led(0);
 }
+
+void sct_value(uint16_t value)
+{
+	value = value%1000;
+	uint32_t out = reg_values[2][value%10];
+	value = value /10;
+	if(value>0)
+	{
+		out |= reg_values[1][value%10];
+		value = value /10;
+		if(value>0)
+		{
+			out |= reg_values[0][value%10];
+		}
+	}
+	sct_led(out);
+}

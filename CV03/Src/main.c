@@ -26,10 +26,17 @@
 int main(void)
 {
 	 sct_init();
+	 uint16_t i = 0;
+	 volatile uint32_t del = 0;
 	 sct_led(0x7A5C36DE);
+	 for(del = 0; del<1000000;del++);
 
 	while(1)
 	{
-		 sct_led(0x7A5C36DE);
+		sct_value(i);
+		i+=111;
+		if(i>999) i = 0;
+		for(del = 0; del<500000;del++);
+
 	}
 }
