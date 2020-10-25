@@ -27,18 +27,11 @@ void sct_led(uint32_t value)
 
 void sct_init(void)
 {
-	RCC->AHBENR |= RCC_AHBENR_GPIOBEN|RCC_AHBENR_GPIOAEN; // enable CLK
-	GPIOB->MODER |= GPIO_MODER_MODER5_0; // nLA = PB5, output
-	GPIOB->MODER |= GPIO_MODER_MODER4_0; // SDI = PB4, output
-	GPIOB->MODER |= GPIO_MODER_MODER3_0; // CLK = PB3, output
-	GPIOB->MODER |= GPIO_MODER_MODER10_0; // nOE = PB10, output
 
-	GPIOA->MODER |= GPIO_MODER_MODER5_0; // nOE = PB10, output
-	sct_noe(0);
 	sct_led(0);
 }
 
-void sct_value(uint16_t value)
+void sct_value(uint16_t value, uint16_t bargraph)
 {
 	value = value%1000;
 	uint32_t out = reg_values[2][value%10];
@@ -52,5 +45,6 @@ void sct_value(uint16_t value)
 			out |= reg_values[0][value%10];
 		}
 	}
+	out |= reg_values[3][bargraph%10];
 	sct_led(out);
 }

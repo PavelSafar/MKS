@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "sct.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,7 +51,11 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC_Init(void);
 /* USER CODE BEGIN PFP */
-
+static volatile uint32_t raw_pot;
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+ raw_pot = HAL_ADC_GetValue(hadc);
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -66,7 +70,7 @@ static void MX_ADC_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	sct_init();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -89,6 +93,9 @@ int main(void)
   MX_GPIO_Init();
   MX_ADC_Init();
   /* USER CODE BEGIN 2 */
+  HAL_ADCEx_Calibration_Start(&hadc);
+  HAL_Delay(5);
+  HAL_ADC_Start_IT(&hadc);
 
   /* USER CODE END 2 */
 
@@ -99,6 +106,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  sct_value(raw_pot/(4095.0/501.0),raw_pot/(4095/9));
+	  HAL_Delay(50);
+
+
+
+
+
+
   }
   /* USER CODE END 3 */
 }
@@ -184,20 +199,6 @@ static void MX_ADC_Init(void)
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
   sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
-  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure for the selected ADC regular channel to be converted.
-  */
-  sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
-  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure for the selected ADC regular channel to be converted.
-  */
-  sConfig.Channel = ADC_CHANNEL_VREFINT;
   if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
   {
     Error_Handler();
