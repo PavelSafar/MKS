@@ -101,11 +101,15 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint8_t c;
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  HAL_UART_Receive(&huart2, &c, 1, HAL_MAX_DELAY);
+	  HAL_UART_Transmit(&huart2, &c, 1, HAL_MAX_DELAY);
+
   }
   /* USER CODE END 3 */
 }
