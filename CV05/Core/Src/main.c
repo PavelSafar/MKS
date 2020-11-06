@@ -36,6 +36,8 @@
 static uint8_t uart_rx_buf[RX_BUFFER_LEN];
 static volatile uint16_t uart_rx_read_ptr = 0;
 #define uart_rx_write_ptr (RX_BUFFER_LEN - hdma_usart2_rx.Instance->CNDTR)
+#define EEPROM_ADDR 0xA0
+#define DUMP_LENGHT (0XF+1)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -76,10 +78,13 @@ void uart_process_command(uint8_t* cmd)
 {
 	char *token;
 	token = strtok(cmd, " ");
-	if (strcasecmp(token, "HELLO") == 0) {
+	if (strcasecmp(token, "HELLO") == 0)//test communication
+	{
 	 printf("Komunikace OK\n");
 	}
-	else if (strcasecmp(token, "LED1") == 0)
+
+
+	else if (strcasecmp(token, "LED1") == 0)// Set/reset LED1
 	{
 		token = strtok(NULL, " ");
 		if (strcasecmp(token, "ON") == 0)//LED1 ON
@@ -92,7 +97,10 @@ void uart_process_command(uint8_t* cmd)
 		}
 		printf("OK\n");
 	}
-	else if (strcasecmp(token, "LED2") == 0)
+
+
+
+	else if (strcasecmp(token, "LED2") == 0)// Set/reset LED2
 	{
 		 token = strtok(NULL, " ");
 		 if (strcasecmp(token, "ON") == 0)//LED1 ON
@@ -105,9 +113,12 @@ void uart_process_command(uint8_t* cmd)
 		 }
 		 printf("OK\n");
 	}
-	else if (strcasecmp(token, "STATUS") == 0)
-		{
-		 if (HAL_GPIO_ReadPin(LED0_GPIO_Port,LED0_Pin))//LED1 ON
+
+
+
+	else if (strcasecmp(token, "STATUS") == 0)// Return LEDs state
+	{
+		if (HAL_GPIO_ReadPin(LED0_GPIO_Port,LED0_Pin))//LED1 ON
 		 {
 			 printf("LED1 ON\n");
 		 }
@@ -123,8 +134,60 @@ void uart_process_command(uint8_t* cmd)
 		  {
 		 	 printf("LED2 OFF\n");
 		  }
+	}
+
+	else if (strcasecmp(token, "DUMP") == 0)// dump EEPROM
+	{
+		uint8_t data[DUMP_LENGHT];
+		HAL_I2C_Mem_Read(&hi2c1, EEPROM_ADDR, 0, I2C_MEMADD_SIZE_16BIT, data, DUMP_LENGHT, 1000);
+		for(uint16_t i = 0; i<DUMP_LENGHT;)
+		{
+			for(uint8_t j = 0; j<8;j++)
+			{
+				printf("%02X ", data[i]);
+				i++;
+			}
+			printf("\n");
+		}
+	}
+
+	else if (strcasecmp(token, "READ") == 0)//Read value from EEPROM
+	{
+		 token = strtok(NULL, " ");
+		 uint8_t value = 0;
+		 uint16_t addr = atoi(token);
+		 HAL_I2C_Mem_Read(&hi2c1, EEPROM_ADDR, addr, I2C_MEMADD_SIZE_16BIT, &value, 1, 1000);
+		 printf("Adresa 0x%04X ", addr);
+		 printf(" = 0x%0Xx\n ", value);
+	}
+
+
+	else if (strcasecmp(token, "WRITE") == 0)
+		{
+			 token = strtok(NULL, " ");
+			 uint16_t addr = atoi(token);
+			 token = strtok(NULL, " ");
+			 uint8_t value = atoi(token);
+			 uint8_t value2;
+			 HAL_I2C_Mem_Write(&hi2c1, EEPROM_ADDR, addr, I2C_MEMADD_SIZE_16BIT, &value, 1, 1000);
+			 /* Check if the EEPROM is ready for a new operation */
+			 while (HAL_I2C_IsDeviceReady(&hi2c1, EEPROM_ADDR, 300, 1000) == HAL_TIMEOUT);
+			 HAL_I2C_Mem_Read(&hi2c1, EEPROM_ADDR, addr+1, I2C_MEMADD_SIZE_16BIT, &value2, 1, 1000); //check written data
+			// HAL_I2C_Mem_Read(&hi2c1, EEPROM_ADDR, addr+1, I2C_MEMADD_SIZE_16BIT, &value2, 1, 1000); //for debug (read from addr+1 -> probably wrong data)
+			 if(value==value2)
+			 {
+				 printf("Na adresu 0x%04X ", addr);
+				 printf("zapsana hodnota 0x%02X.\n", value2);//Confirm correct value
+			 }
+			 else  printf("Chyba zapisu, zapsana hodnota je 0x%02X\n ", value2);//report wrong value
 		}
 }
+
+
+
+
+
+
 
 #define CMD_BUFFER_LEN 255
 static void uart_byte_available(uint8_t c)
@@ -381,14 +444,14 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : LED1_Pin */
   GPIO_InitStruct.Pin = LED1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LED0_Pin */
   GPIO_InitStruct.Pin = LED0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED0_GPIO_Port, &GPIO_InitStruct);
 
