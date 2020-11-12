@@ -1,3 +1,4 @@
 sct.c:14:6:sct_led	24	static
 sct.c:27:6:sct_init	8	static
 sct.c:32:6:sct_value	32	static
+sct.c:50:6:sct_valueDP	32	static

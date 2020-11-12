@@ -46,3 +46,22 @@ void sct_value(uint16_t value, uint16_t bargraph)
 	out |= reg_values[3][bargraph%10];
 	sct_led(out);
 }
+
+void sct_valueDP(uint16_t value, uint16_t bargraph)
+{
+	value = value%1000;
+	uint32_t out = reg_values[2][value%10];
+	value = value /10;
+	if(value>0)
+	{
+		out |= reg_values[1][value%10];
+		value = value /10;
+		if(value>0)
+		{
+			out |= reg_values[0][value%10];
+		}
+	}
+	out |= reg_values[3][bargraph%10];
+	out|= 1<<11;
+	sct_led(out);
+}

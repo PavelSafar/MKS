@@ -52,7 +52,10 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC_Init(void);
 /* USER CODE BEGIN PFP */
-
+int16_t roundTMP(int16_t tmp)
+{
+	return (tmp + (10 / 2)) / 10;
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -94,6 +97,7 @@ int main(void)
   sct_init();
   /* USER CODE END 2 */
 
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -107,7 +111,11 @@ int main(void)
 
 	  if(OWReadTemperature(&tmp1W))
 	  {
-		  sct_value(tmp1W/10,0);
+		  sct_valueDP(roundTMP(tmp1W),0);
+	  }
+	  else
+	  {
+		  sct_led(0);// error
 	  }
 
 
