@@ -157,11 +157,6 @@ int main(void)
 
 
 
-
-
-
-
-
 	  HAL_Delay(LOOPDELAY);
 
   }
