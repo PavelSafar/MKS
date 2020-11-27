@@ -45,7 +45,11 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
-
+volatile static int8_t key = -1;
+const int8_t psswd[] = {7,9,3,2,12};
+#define PSSWDTIMEOUT 3000
+uint8_t position = 0;
+uint32_t timeout = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,6 +68,48 @@ int __io_putchar(int ch)
  ITM_SendChar(ch);
 return 0;
 }
+
+
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+ static int8_t row = 0;
+ static const int8_t keyboard[4][4] = {
+ { 1, 2, 3, 21 },
+ { 4, 5, 6, 22 },
+ { 7, 8, 9, 23 },
+ { 11, 0, 12, 24 },
+ };
+ if (key == -1) {
+	 if (HAL_GPIO_ReadPin(Col1_GPIO_Port, Col1_Pin) == GPIO_PIN_RESET) key = keyboard[row][0];
+	 if (HAL_GPIO_ReadPin(Col2_GPIO_Port, Col2_Pin) == GPIO_PIN_RESET) key = keyboard[row][1];
+	 if (HAL_GPIO_ReadPin(Col1_GPIO_Port, Col1_Pin) == GPIO_PIN_RESET) key = keyboard[row][2];
+	 if (HAL_GPIO_ReadPin(Col2_GPIO_Port, Col2_Pin) == GPIO_PIN_RESET) key = keyboard[row][3];
+	 printf("stisknuto: %d\n", key );
+ }
+
+ HAL_GPIO_WritePin(Row1_GPIO_Port, Row1_Pin, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(Row2_GPIO_Port, Row2_Pin, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(Row3_GPIO_Port, Row3_Pin, GPIO_PIN_SET);
+ HAL_GPIO_WritePin(Row4_GPIO_Port, Row4_Pin, GPIO_PIN_SET);
+
+ switch (row) {
+ case 0: row = 1; HAL_GPIO_WritePin(Row2_GPIO_Port, Row2_Pin, GPIO_PIN_RESET); break;
+ case 1: row = 2; HAL_GPIO_WritePin(Row3_GPIO_Port, Row3_Pin, GPIO_PIN_RESET); break;
+ case 2: row = 1; HAL_GPIO_WritePin(Row2_GPIO_Port, Row2_Pin, GPIO_PIN_RESET); break;
+ case 3: row = 2; HAL_GPIO_WritePin(Row3_GPIO_Port, Row3_Pin, GPIO_PIN_RESET); break;
+ }
+
+ row++;
+ if(row>3) row = 0;
+}
+
+void  unlock(void)
+{
+	HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_SET);
+	printf("Unlocked\n");
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -97,6 +143,7 @@ int main(void)
   MX_USART3_UART_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_Base_Start_IT(&htim3);
   printf("start\n");
   /* USER CODE END 2 */
 
@@ -107,10 +154,30 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin);
-	  HAL_Delay(250);
-	  printf("Tick\n");
 
+	  if(key!=-1)// new key available
+	  {
+		  if(timeout == 0) timeout =  HAL_GetTick(); //start timeout
+		  if(key==psswd[position]) position++; // another correct number;
+		  else
+		  {
+			  position = 0;
+			  timeout = 0;
+			  printf("Wrong password\n");
+		  }
+		  if(position>sizeof(psswd)) unlock(); //psswd correct
+		  key = -1;// receive another pressed key
+	  }
+
+	  if( HAL_GetTick() - timeout > PSSWDTIMEOUT) //timeout to enter password
+	  {
+		  timeout = 0;
+		  position = 0;
+		  printf("Timeout elapsed \n");
+	  }
+	  HAL_Delay(6);
+	  //printf("Tick\n");
+	  HAL_GetTick();
 
   }
   /* USER CODE END 3 */
