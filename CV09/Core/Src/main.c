@@ -57,13 +57,22 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
+
+
+
+
+
+
+
+
 void circle (float start_angle, float angle,  float r, uint8_t btn, uint32_t step_delay)
 {
-		uint8_t buff[4];
+		uint8_t buff[5];
+		buff[0] = 0x02;
 	float x = 0, y = 0;
 	float x_old = r*cos(start_angle);
 	float y_old = r*sin(start_angle);
-	buff[0] = btn; // stiskni leve tlacitko
+	buff[1] = btn; // stiskni leve tlacitko
 	for(float phi = start_angle; phi<=angle+start_angle; phi+=2.0*PI/100)
 	  {
 		  x = r*cos(phi);
@@ -71,37 +80,77 @@ void circle (float start_angle, float angle,  float r, uint8_t btn, uint32_t ste
 
 
 
-		  buff[1] = (int8_t)(round( x_old - x)); // posun X +10
-		  buff[2] = (int8_t)(round(y_old - y)); // posun Y -3
-		  buff[3] = 0; // bez scrollu
-		  if(buff[1]) x_old = x;
-		   if(buff[2]) y_old = y;
+		  buff[2] = (int8_t)(round( x_old - x)); // posun X +10
+		  buff[3] = (int8_t)(round(y_old - y)); // posun Y -3
+		  buff[4] = 0; // bez scrollu
+		  if(buff[2]) x_old = x;
+		   if(buff[3]) y_old = y;
 		  USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
-		  HAL_Delay(step_delay+USBD_HID_GetPollingInterval(&hUsbDeviceFS));
+		  HAL_Delay(step_delay+4*USBD_HID_GetPollingInterval(&hUsbDeviceFS));
 
 
 	  }
-	buff[0] = 0;
+	buff[1] = 0;
 		USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
-	  HAL_Delay(step_delay+USBD_HID_GetPollingInterval(&hUsbDeviceFS));
+	  HAL_Delay(step_delay+4*USBD_HID_GetPollingInterval(&hUsbDeviceFS));
 }
+
+
+
+
+
+
+
+
 
 void line (int16_t x, int16_t y, uint8_t btn)
 {
-		uint8_t buff[4];
+		uint8_t buff[5];
+
 		for(uint8_t i = 0; i<20; i++)
-				  {
-		buff[0] = btn;
-		  buff[1] = (int8_t)(x/20);
-		  buff[2] = (int8_t)(-y/20);
-		  buff[3] = 0; // bez scrollu
+		  {
+			buff[0] = 0x02;
+		  buff[1] = btn;
+		  buff[2] = (int8_t)(x/20);
+		  buff[3] = (int8_t)(-y/20);
+		  buff[4] = 0; // bez scrollu
 
 		  USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
-		  HAL_Delay(USBD_HID_GetPollingInterval(&hUsbDeviceFS));
+		  HAL_Delay(5*USBD_HID_GetPollingInterval(&hUsbDeviceFS));
 		  }
-
 }
-/* USER CODE END PFP */
+
+
+
+
+
+
+
+
+
+void key(uint8_t key)
+{
+	static uint8_t buff[9] = {0x01,0,0,0,0,0,0,0,0};
+	buff[3] = key;
+	USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
+	 HAL_Delay(3*USBD_HID_GetPollingInterval(&hUsbDeviceFS));
+	 buff[3] = 0x00;
+	 USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
+	 HAL_Delay(50+2*USBD_HID_GetPollingInterval(&hUsbDeviceFS));
+	/* USER CODE END PFP */
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
@@ -139,7 +188,35 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
+  while(!HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin)) HAL_Delay(10);
+  uint8_t buff[9];
+  buff[0] = 0x01;
+  buff[1] = 0x08;
+  buff[2] = 0x00;
 
+  buff[3] = 0x15;
+  buff[4] = 0x00;
+  buff[5] = 0x00;
+  buff[6] = 0x00;
+  buff[7] = 0x00;
+  buff[8] = 0x00;
+  USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
+   HAL_Delay(3*USBD_HID_GetPollingInterval(&hUsbDeviceFS));
+   buff[1] = 0x00;
+   buff[3] = 0x00;
+   USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
+   HAL_Delay(5*USBD_HID_GetPollingInterval(&hUsbDeviceFS));
+
+   key(0x10);//M
+   key(0x16);//S
+   key(0x13);//P
+   key(0x04);//A
+   key(0x0c);//I
+   key(0x011);//N
+   key(0x017);//T
+   key(0x28);//ENTER
+
+    HAL_Delay(2000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -155,9 +232,13 @@ int main(void)
 
 
 
-	  while(!HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin)) HAL_Delay(10);
-	  //line(350,350,0);
-	 // HAL_Delay(5000);
+
+	  line(-1000,1000,0);
+	  line(-1000,1000,0);
+	  line(-1000,1000,0);
+	  line(-1000,1000,0);
+	  HAL_Delay(50);
+	  line(200,-310,0);
 	   circle (0,2*PI,200,1, 1);
 	   line(100,75,0);
 	   circle (0,2*PI,50,1, 1);
@@ -167,7 +248,8 @@ int main(void)
 	   line(0,-100,1);
 	   line(120,-10,0);
 	   circle (1.2*PI,0.6*PI,150,1, 1);
-
+	   line(-80,-30,0);
+	   while(!HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin)) HAL_Delay(10);
 
   }
 
