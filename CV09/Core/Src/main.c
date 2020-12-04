@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usbd_hid.h"
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,6 +34,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define PI ((float)(3.141592654))
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,7 +48,8 @@ UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 extern USBD_HandleTypeDef hUsbDeviceFS;
-uint8_t buff[4];
+
+uint16_t r;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -54,7 +57,50 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
+void circle (float start_angle, float angle,  float r, uint8_t btn, uint32_t step_delay)
+{
+		uint8_t buff[4];
+	float x = 0, y = 0;
+	float x_old = r*cos(start_angle);
+	float y_old = r*sin(start_angle);
+	buff[0] = btn; // stiskni leve tlacitko
+	for(float phi = start_angle; phi<=angle+start_angle; phi+=2.0*PI/100)
+	  {
+		  x = r*cos(phi);
+		  y = r*sin(phi);
 
+
+
+		  buff[1] = (int8_t)(round( x_old - x)); // posun X +10
+		  buff[2] = (int8_t)(round(y_old - y)); // posun Y -3
+		  buff[3] = 0; // bez scrollu
+		  if(buff[1]) x_old = x;
+		   if(buff[2]) y_old = y;
+		  USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
+		  HAL_Delay(step_delay+USBD_HID_GetPollingInterval(&hUsbDeviceFS));
+
+
+	  }
+	buff[0] = 0;
+		USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
+	  HAL_Delay(step_delay+USBD_HID_GetPollingInterval(&hUsbDeviceFS));
+}
+
+void line (int16_t x, int16_t y, uint8_t btn)
+{
+		uint8_t buff[4];
+		for(uint8_t i = 0; i<20; i++)
+				  {
+		buff[0] = btn;
+		  buff[1] = (int8_t)(x/20);
+		  buff[2] = (int8_t)(-y/20);
+		  buff[3] = 0; // bez scrollu
+
+		  USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
+		  HAL_Delay(USBD_HID_GetPollingInterval(&hUsbDeviceFS));
+		  }
+
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -102,14 +148,39 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-	  buff[0] = 0x01; // stiskni leve tlacitko
-	  buff[1] = (int8_t)(10); // posun X +10
-	  buff[2] = (int8_t)(-3); // posun Y -3
-	  buff[3] = 0; // bez scrollu
-	  USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
-	  HAL_Delay(USBD_HID_GetPollingInterval(&hUsbDeviceFS));
     /* USER CODE BEGIN 3 */
+
+
+
+
+
+
+	  while(!HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin)) HAL_Delay(10);
+	  //line(350,350,0);
+	 // HAL_Delay(5000);
+	   circle (0,2*PI,200,1, 1);
+	   line(100,75,0);
+	   circle (0,2*PI,50,1, 1);
+	   line(200,0,0);
+	   circle (0,2*PI,50,1, 1);
+	   line(-80,-30,0);
+	   line(0,-100,1);
+	   line(120,-10,0);
+	   circle (1.2*PI,0.6*PI,150,1, 1);
+
+
   }
+
+
+
+
+
+
+
+
+
+
+
   /* USER CODE END 3 */
 }
 
@@ -246,15 +317,18 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LD3_Pin|LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(USB_PowerSwitchOn_GPIO_Port, USB_PowerSwitchOn_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+
   /*Configure GPIO pin : USER_Btn_Pin */
   GPIO_InitStruct.Pin = USER_Btn_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(USER_Btn_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LD3_Pin LD2_Pin */
